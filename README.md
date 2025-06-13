@@ -9,4 +9,18 @@ Files with extension `.af` are argumentation frameworks. For some of them, the f
   - Fabio Fioravanti
   - Maria Chiara Meo
   - Francesca Scozzari
-    
+
+## How to run the model
+
+1. Download [DLV](https://www.dlvsystem.it/dlvsite/dlv-download/) (an implementation of disjunctive Datalog with ASP extensions);
+2. Download the file `baf.dl` from the [ASPARTIX for Bipolar AFs](https://www.dbai.tuwien.ac.at/research/argumentation/aspartix/baf.html) page.  
+   *Note:* ASPARTIX is not a single software package, but rather a collection of programs for DLV or Clingo (another ASP implementation) that implement the semantics of argumentation frameworks. Different types of frameworks use different programs, and often even different semantics for the same type of framework require separate programs.
+3. Download the file `baf_model.af` (or other similar file) that contains our argumentation framework.
+4. Put everything in the same folder, open a terminal window, and run the command:
+   
+   ```bash
+   dlv baf_model.af baf.dl -filter=in
+   ```
+The `.af` files are configured to compute closed preferred extensions. It is possible to change the `c_prefex` line in those files with one of the following to compute under a different semantics:  
+  - `d_adm`, `s_adm`, `c_adm`: Indicate to the system that you want to compute Dung admissible, stable, or closed extensions.
+  - `d_prefex`, `s_prefex`, `c_prefex`: As above, but for preferred extensions.
