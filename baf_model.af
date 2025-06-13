@@ -1,0 +1,158 @@
+%%% This is an attempt to modeling Software Design Choices with
+%%% Bipolar Argumentation Frameworks.
+
+baf.
+
+d_prefex.
+
+%%%% Contexts
+
+%% Database instances
+
+db(1).
+
+% remove next comment if you have multiple databases
+%db(2).
+
+%% Contexts (not used)
+
+context(pl).
+context(dbms(X)) :- db(X).
+context(dblib(X)) :- db(X).
+
+%%%% Facts
+
+%% programming languages
+
+language(php).
+language(python).
+language(java).
+
+%% database management systems
+
+dbms(mysql).
+dbms(pgsql).
+dbms(oracle).
+
+%% database access libraries
+
+dblib(pdo).
+dblib(jdbc).
+dblib(mysqli).
+dblib(mysql_any).
+dblib(pgsql_any).
+
+%% dbms supported by database access libraries
+
+% dbms supported by the PDO library
+
+pdo_supported(mysql).
+pdo_supported(pgsql).
+pdo_supported(oracle).
+
+% dbms supported by the JDBC library
+
+jdbc_supported(mysql).
+jdbc_supported(pgsql).
+jdbc_supported(oracle).
+
+% general predicate
+
+dblib_dbms(pdo, X) :- pdo_supported(X).
+dblib_dbms(jdbc, X) :- jdbc_supported(X).
+dblib_dbms(mysqli, mysql).
+dblib_dbms(mysql_any, mysql).
+dblib_dbms(pgsql_any, pgsql).
+
+%% programming languages supported by the database access libraries
+
+dblib_pl(pdo, php).
+dblib_pl(jdbc, java).
+dblib_pl(mysqli, php).
+dblib_pl(mysql_any, php).
+dblib_pl(mysql_any, python).
+dblib_pl(pgsql_any, php).
+dblib_pl(pgsql_any, python).
+
+%%%% Contexts and Libraries
+
+%%% Arguments
+
+%% argument: use a specific programming language
+
+arg(use(L, pl)) :- language(L).
+
+%% argument: use a specific dbms for a given db
+
+arg(use(Dbms, dbms(Db))) :- dbms(Dbms), db(Db).
+
+%% argument: use a specific database access library for a given db
+
+arg(use(Lib, dblib(Db))) :- dblib(Lib), db(Db).
+
+%%% Attacks
+
+%% Attack between alternative implementations of a context
+
+att(use(Library1, Context), use(Library2, Context)) :-
+    arg(use(Library1, Context)),
+    arg(use(Library2, Context)),
+    not Library1 = Library2.
+
+%% A library attacks an unsupported dbms
+
+att(use(Lib, dblib(Db)), use(Dbms, dbms(Db))) :-
+    dblib(Lib),
+    db(Db),
+    dbms(Dbms),
+    not dblib_dbms(Lib, Dbms).
+
+%% A library attacks an unsupported pl
+
+att(use(Lib, dblib(Db)), use(Lang, pl)) :-
+    dblib(Lib),
+    db(Db),
+    language(Lang),
+    not dblib_pl(Lib, Lang).
+
+%%%% Configuration of Librarys
+
+%%% Arguments
+
+%% argument: library configurations for secure connections
+
+arg(configure(pdo, dblib(Db), secure_connections, yes)) :- db(Db).
+arg(configure(pdo, dblib(Db), secure_connections, no)) :- db(Db).
+arg(configure(mysqli, dblib(Db), secure_connections, yes)) :- db(Db).
+arg(configure(mysqli, dblib(Db), secure_connections, no)) :- db(Db).
+
+%%% Attacks
+
+%% Attack between different configuration for the same Library and Context.
+
+att(configure(Library, Context, Configuration, Value1), configure(Library, Context, Configuration, Value2)) :-
+    arg(configure(Library, Context, Configuration, Value1)),
+    arg(configure(Library, Context, Configuration, Value2)),
+    not Value1 = Value2.
+
+%%%% Goals
+
+%%% Arguments
+
+goal(green).
+goal(security).
+goal(open_source).
+
+arg(goal(X)) :- goal(X).
+
+%%% Attacks
+
+att(use(oracle, dbms(X)), goal(open_source)) :- db(X) .
+
+%%% Supports
+
+support(configure(Library, Context, secure_connections, yes), goal(security)) :-
+    arg(configure(Library, Context, secure_connections, yes)).
+
+support(configure(Library, Context, secure_connections, no), goal(green)) :-
+    arg(configure(Library, Context, secure_connections, no)).
